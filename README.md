@@ -55,7 +55,7 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 1. 首先fork该项目
 2. 在 Deno Deploy 中创建新项目
 3. 连接 GitHub 仓库，并选择fork的该项目
-4. 填写其他信息后，将入口设置为 `main.ts`，并进行部署，然后到设置内配置环境变量 `API_SITES`（可选）
+4. 填写其他信息后，将入口设置为 `deno.ts`，并进行部署，然后到设置内配置环境变量 `API_SITES`（可选）
 5. enjoy it
 
 ### huggingface & docker部署
