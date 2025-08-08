@@ -61,6 +61,7 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 ### huggingface docker部署
 偷懒：
 [一键fork](https://huggingface.co/spaces/g2i/aichataudit/blob/main/Dockerfile?duplicate=true)
+
 抱脸docker自部署：
 1. 新建一个space，选空docker
 2. 复制项目中的Dockerfile内容
