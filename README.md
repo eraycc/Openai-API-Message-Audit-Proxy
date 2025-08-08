@@ -73,10 +73,9 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 8. enjoy it ＆ 保活
 
 docker部署：
-
+```
 docker pull ghcr.io/eraycc/openai-api-message-audit-proxy:latest
-
 或者
-
 Dockerfile：
-ROM ghcr.io/eraycc/openai-api-message-audit-proxy:latest
+FROM ghcr.io/eraycc/openai-api-message-audit-proxy:latest
+```
