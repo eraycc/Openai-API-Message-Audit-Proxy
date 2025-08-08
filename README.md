@@ -6,22 +6,23 @@
 1. **环境变量配置**：支持通过 `API_SITES` 环境变量配置多个API站点
 ```
 API_SITES格式如下：
-[
+const DEFAULT_API_SITES: ApiSite[] = [
   {
     path: "openai",
     baseurl: "https://api.openai.com",
-    ratelimit: 0, // 速率限制 可选参数，默认每分钟120次（可通过DEFAULT_RATE_LIMIT设置）为0不限制
-    "msg-audit-config": { // 均为可选参数，不配置则使用默认的
+    ratelimit: 0,
+    "msg-audit-config": {
       AuditPath: "/v1/chat/completions",
       AuditParameter: "messages"
     }
   },
   {
-    path: "example",
-    baseurl: "https://api.example.com"
-  },
-  …
-]
+    path: "example", // 注意：path 应该是唯一的，不能重复
+    baseurl: "https://api.example.com",
+    ratelimit: 0 // 可选速率限制参数，为0不限制，默认为限制该API每分钟请求120次
+    // 如果 msg-audit-config 是可选的，可以省略
+  }
+];
 ```
 2. **消息审核**：只针对对聊天请求进行敏感词检测，基于[文本敏感词检测API - iMin博客](https://www.iminbk.com/archives/276.html)，放行其他如模型列表等请求
 3. **速率限制**：使用 Deno KV 实现基于时间窗口的请求限制
