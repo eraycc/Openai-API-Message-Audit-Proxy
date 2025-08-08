@@ -25,8 +25,42 @@ const DEFAULT_API_SITES: ApiSite[] = [
 ];
 ```
 2. **消息审核**：只针对对聊天请求进行敏感词检测，基于[文本敏感词检测API - iMin博客](https://www.iminbk.com/archives/276.html)进行审核，感谢🙏这位大佬提供的审核API，其他如模型列表等请求则直接放行。
-3. **速率限制**：使用 Deno KV 实现基于时间窗口的请求限制
-4. **灵活路由**：支持路径代理和直接URL代理两种模式
+```
+审核API请请求方式及返回参数
+均为get请求
+https://apiv1.iminbk.com/base64?word=base64处理(原消息)
+https://apiv1.iminbk.com/?word={原消息，可以使用urlencode}
+违规内容的返回：
+{
+  "status": "done",
+  "verdict": "malicious",
+  "rule_id": "generic.87",
+  "data": {
+    "size": "106",
+    "today_scan_total": "831181",
+    "match_string": "5pON5L2g",
+    "descr": "There is illegal content",
+    "EngineType": "dsm",
+    "Engine Version": "2025.06.15"
+  }
+}
+安全内容返回：
+{
+  "status": "done",
+  "verdict": "security",
+  "rule_id": "",
+  "data": {
+    "size": "4",
+    "today_scan_total": "831219",
+    "match_string": "null",
+    "descr": "normal",
+    "EngineType": "dsm",
+    "Engine Version": "2025.06.15"
+  }
+}
+```
+4. **速率限制**：使用 Deno KV 实现基于时间窗口的请求限制
+5. **灵活路由**：支持路径代理和直接URL代理两种模式
 
 ## 使用示例
 
