@@ -24,7 +24,7 @@ const DEFAULT_API_SITES: ApiSite[] = [
   }
 ];
 ```
-2. **消息审核**：只针对对聊天请求进行敏感词检测，基于[文本敏感词检测API - iMin博客](https://www.iminbk.com/archives/276.html)，放行其他如模型列表等请求
+2. **消息审核**：只针对对聊天请求进行敏感词检测，基于[文本敏感词检测API - iMin博客](https://www.iminbk.com/archives/276.html)进行审核，感谢🙏这位大佬提供的审核API，他如模型列表等请求
 3. **速率限制**：使用 Deno KV 实现基于时间窗口的请求限制
 4. **灵活路由**：支持路径代理和直接URL代理两种模式
 
