@@ -58,7 +58,7 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 4. 填写其他信息后，将入口设置为 `main.ts`，并进行部署，然后到设置内配置环境变量 `API_SITES`（可选）
 5. enjoy it
 
-### huggingface docker部署
+### huggingface & docker部署
 偷懒：
 [一键fork](https://huggingface.co/spaces/g2i/aichataudit/blob/main/Dockerfile?duplicate=true)
 
@@ -73,7 +73,10 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 8. enjoy it ＆ 保活
 
 docker部署：
+
 docker pull ghcr.io/eraycc/openai-api-message-audit-proxy:latest
+
 或者
+
 Dockerfile：
 ROM ghcr.io/eraycc/openai-api-message-audit-proxy:latest
