@@ -51,14 +51,22 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 - **自动清理**：定期清理过期的速率限制记录
 
 ## 部署步骤
-
+### Deno deploy部署
 1. 首先fork该项目
 2. 在 Deno Deploy 中创建新项目
 3. 连接 GitHub 仓库，并选择fork的该项目
 4. 填写其他信息后，将入口设置为 `main.ts`，并进行部署，然后到设置内配置环境变量 `API_SITES`（可选）
 5. enjoy it
 
-OpenAI API 内容审核 Proxy
-- 高效审核代理
-- 支持流式响应
-- 易部署易配置
+### huggingface docker部署
+偷懒：
+[一键fork](https://huggingface.co/spaces/g2i/aichataudit/blob/main/Dockerfile?duplicate=true)
+抱脸docker自部署：
+1. 新建一个space，选空docker
+2. 复制项目中的Dockerfile内容
+3. space file内创建文件
+4. 文件名：Dockerfile
+5. 把复制的内容粘贴到Dockerfile内
+6. 修改或自行设置相关环境变量evn配置
+7. 保存即可开始编译并运行
+8. enjoy it ＆ 保活
