@@ -71,3 +71,9 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 6. 修改或自行设置相关环境变量evn配置
 7. 保存即可开始编译并运行
 8. enjoy it ＆ 保活
+
+docker部署：
+docker pull ghcr.io/eraycc/openai-api-message-audit-proxy:latest
+或者
+Dockerfile：
+ROM ghcr.io/eraycc/openai-api-message-audit-proxy:latest
