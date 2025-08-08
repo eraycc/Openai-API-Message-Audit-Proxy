@@ -64,7 +64,7 @@ https://xxx.deno.dev/proxy/https://api.example.com/v1/models
 
 抱脸docker自部署：
 1. 新建一个space，选空docker
-2. 复制项目中的Dockerfile内容
+2. 复制项目中的Dockerfile-huggingface内容
 3. space file内创建文件
 4. 文件名：Dockerfile
 5. 把复制的内容粘贴到Dockerfile内
