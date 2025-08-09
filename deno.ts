@@ -34,6 +34,7 @@ interface BanRecord {
 }
 
 // Encryption configuration
+const Deploy_Domain = Deno.env.get("Deploy_Domain") || "https://127.0.0.1:8000";
 const ENCRYPTION_PASSWORD = Deno.env.get("ENCRYPTION_PASSWORD") || "openai-proxy-secret-key";
 const ENCRYPTION_SALT = Deno.env.get("ENCRYPTION_SALT") || "openai-proxy-salt";
 
@@ -578,7 +579,7 @@ async function sendWxPusherNotification(
       <h3>违规内容（已加密）：</h3>
       <p><code style="word-break:break-all;">${encryptedMessages}</code></p>
       <hr>
-      <p style="color:#666;font-size:12px;">使用解密工具查看原文：/decryption</p>
+      <p style="color:#666;font-size:12px;">解密地址：<a href="${Deploy_Domain}/decryption" target="_blank">${Deploy_Domain}/decryption</a></p>
     `;
     
     const payload = {
