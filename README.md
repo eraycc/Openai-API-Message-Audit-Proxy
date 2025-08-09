@@ -29,6 +29,9 @@
 
 ```bash
 # 必填配置
+# 域名地址
+Deploy_Domain="https://deploy-url"
+（末尾不带/）
 # 加解密密码
 ENCRYPTION_PASSWORD="your-encryption-password" 
 # 加解密盐值
