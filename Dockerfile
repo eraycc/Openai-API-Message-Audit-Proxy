@@ -14,7 +14,15 @@ RUN deno cache main.ts
 EXPOSE 8000
 
 # 设置环境变量
-ENV API_SITES='[{"path":"openai","baseurl":"https://api.openai.com","ratelimit":0,"msg-audit-config":{"AuditPath":"/v1/chat/completions","AuditParameter":"messages"}}]'
+ENV API_SITES='[{"path":"openai","baseurl":"https://api.openai.com","ratelimit":0,"MaxAuditNum":12,"BanTimeInterval":60,"BanTimeDuration":60,"msg-audit-config":{"AuditPath":"/v1/chat/completions","AuditParameter":"messages"}}]'
+
+ENV ENCRYPTION_PASSWORD='openai-proxy-secret-key'
+
+ENV ENCRYPTION_SALT='openai-proxy-salt'
+
+ENV WXPUSHER_APP_TOKEN='AT_xxx'
+
+ENV WXPUSHER_UID='UID_xxx'
 
 # 启动应用
 CMD ["deno", "run", \
