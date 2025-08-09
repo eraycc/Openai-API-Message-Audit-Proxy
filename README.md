@@ -208,12 +208,15 @@ Q: 如何查看 Deno Deploy 的日志？
 A: 在 Deno Deploy 控制台的 "Logs" 标签页查看实时日志
 
 ### 微信推送
+
 Q: 如何获取 WxPusher 配置？
 A: 参考官方文档：https://wxpusher.zjiecode.com/docs/#/
 
-Q: 为什么收不到微信通知？
-A: 检查：1) APP_TOKEN 和 UID 是否正确 2) 网络是否可达微信服务器
+Q: 为什么收不到微信通知，？
+A: 
+- wxpusher不再支持微信推送通知，需要下载APP
+- APP收不到通知，检查：WXPUSHER_APP_TOKEN 和 WXPUSHER_UID 是否正确，是否能够正常请求推送API服务器
 
-## 交流
+# 交流
 
 如有任何问题，请提交 GitHub Issue
