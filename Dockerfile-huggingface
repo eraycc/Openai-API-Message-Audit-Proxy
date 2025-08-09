@@ -17,8 +17,16 @@ RUN deno cache main.ts
 # 暴露端口
 EXPOSE 8000
 
-# 设置环境变量 (可根据需要覆盖)
-ENV API_SITES='[{"path":"openai","baseurl":"https://api.openai.com","ratelimit":0,"msg-audit-config":{"AuditPath":"/v1/chat/completions","AuditParameter":"messages"}}]'
+# 设置环境变量
+ENV API_SITES='[{"path":"openai","baseurl":"https://api.openai.com","ratelimit":0,"MaxAuditNum":12,"BanTimeInterval":60,"BanTimeDuration":60,"msg-audit-config":{"AuditPath":"/v1/chat/completions","AuditParameter":"messages"}}]'
+
+ENV ENCRYPTION_PASSWORD='openai-proxy-secret-key'
+
+ENV ENCRYPTION_SALT='openai-proxy-salt'
+
+ENV WXPUSHER_APP_TOKEN='AT_xxx'
+
+ENV WXPUSHER_UID='UID_xxx'
 
 # 启动应用 (Deno 2.4.3 兼容的权限设置)
 CMD ["deno", "run", \
