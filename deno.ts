@@ -35,6 +35,7 @@ interface BanRecord {
 
 // Encryption configuration
 const ENCRYPTION_PASSWORD = Deno.env.get("ENCRYPTION_PASSWORD") || "openai-proxy-secret-key";
+const ENCRYPTION_SALT = Deno.env.get("ENCRYPTION_SALT") || "openai-proxy-salt";
 
 // WxPusher configuration from environment
 const WXPUSHER_API_URL = Deno.env.get("WXPUSHER_API_URL") || "https://wxpusher.zjiecode.com/api/send/message";
@@ -81,7 +82,7 @@ async function deriveKey(password: string): Promise<CryptoKey> {
   return await crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: encoder.encode("openai-proxy-salt"),
+      salt: encoder.encode(ENCRYPTION_SALT),
       iterations: 100000,
       hash: "SHA-256"
     },
