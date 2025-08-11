@@ -37,6 +37,9 @@ ENCRYPTION_PASSWORD="your-encryption-password"
 # 加解密盐值
 ENCRYPTION_SALT="your-encryption-salt"
 
+# 最大审核字符数（针对user和system消息）
+MAX_AUDIT_TOKENS=（推荐50-100，过大可能会提高误报率）
+
 # 微信推送配置
 WXPUSHER_APP_TOKEN="AT_xxx"                     # 从WxPusher获取
 WXPUSHER_UID="UID_xxx"                          # 接收消息的用户UID
