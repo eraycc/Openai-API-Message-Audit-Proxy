@@ -43,6 +43,9 @@ const WXPUSHER_API_URL = Deno.env.get("WXPUSHER_API_URL") || "https://wxpusher.z
 const WXPUSHER_APP_TOKEN = Deno.env.get("WXPUSHER_APP_TOKEN") || "AT_xxx";
 const WXPUSHER_UID = Deno.env.get("WXPUSHER_UID") || "UID_xxx";
 
+// 获取 MAX_AUDIT_TOKENS 环境变量，默认为 100
+const MAX_AUDIT_TOKENS = parseInt(Deno.env.get("MAX_AUDIT_TOKENS") || "100");
+
 // Default API sites configuration
 const DEFAULT_API_SITES: ApiSite[] = [
   {
@@ -68,6 +71,73 @@ const DEFAULT_BAN_TIME_INTERVAL = 60;
 const DEFAULT_BAN_TIME_DURATION = 60;
 const RATE_LIMIT_WINDOW = 60000;
 const AUDIT_API_BASE = "https://apiv1.iminbk.com";
+
+// In-memory storage
+class MemoryStore {
+  private banRecords: Map<string, BanRecord> = new Map();
+  private rateLimits: Map<string, { count: number; expireAt: number }> = new Map();
+  
+  // Ban record methods
+  getBanRecord(key: string): BanRecord | null {
+    return this.banRecords.get(key) || null;
+  }
+  
+  setBanRecord(key: string, record: BanRecord): void {
+    this.banRecords.set(key, record);
+  }
+  
+  deleteBanRecord(key: string): void {
+    this.banRecords.delete(key);
+  }
+  
+  getAllBanRecords(): Map<string, BanRecord> {
+    return this.banRecords;
+  }
+  
+  // Rate limit methods
+  getRateLimit(key: string): { count: number; expireAt: number } | null {
+    const record = this.rateLimits.get(key);
+    if (record && record.expireAt > Date.now()) {
+      return record;
+    }
+    // Clean up expired record
+    if (record) {
+      this.rateLimits.delete(key);
+    }
+    return null;
+  }
+  
+  setRateLimit(key: string, count: number, expireAt: number): void {
+    this.rateLimits.set(key, { count, expireAt });
+  }
+  
+  // Cleanup method for expired records
+  cleanup(): void {
+    const now = Date.now();
+    
+    // Clean expired ban records
+    for (const [key, record] of this.banRecords.entries()) {
+      if (record.bannedUntil && record.bannedUntil < now) {
+        this.banRecords.delete(key);
+      }
+    }
+    
+    // Clean expired rate limits
+    for (const [key, record] of this.rateLimits.entries()) {
+      if (record.expireAt < now) {
+        this.rateLimits.delete(key);
+      }
+    }
+  }
+}
+
+// Create a singleton instance
+const memoryStore = new MemoryStore();
+
+// Run cleanup every minute
+setInterval(() => {
+  memoryStore.cleanup();
+}, 60000);
 
 // Encryption/Decryption functions
 async function deriveKey(password: string): Promise<CryptoKey> {
@@ -614,14 +684,38 @@ function extractMessagesForAudit(body: any, auditParameter: string): string {
     if (!Array.isArray(messages)) return "";
     
     const formatted = messages
+      .filter((msg: any) => {
+        // 只提取 role 为 system 和 user 的消息
+        return msg.role === "system" || msg.role === "user";
+      })
       .map((msg: any) => {
         if (typeof msg.content === "string") {
+          // 过滤空/非法字符
           const cleaned = msg.content
             .replace(/[\n\r\t]+/g, " ")
             .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 500);
-          return `${msg.role}:${cleaned}`;
+            .trim();
+          
+          // 如果清理后的内容为空，返回空字符串
+          if (!cleaned) return "";
+          
+          // 根据内容长度决定如何截取
+          let extractedContent: string;
+          
+          if (cleaned.length <= MAX_AUDIT_TOKENS) {
+            // 内容长度不超过 MAX_AUDIT_TOKENS，全部提取
+            extractedContent = cleaned;
+          } else {
+            // 内容长度超过 MAX_AUDIT_TOKENS，随机截取
+            // 计算可能的起始位置范围 (0 到 length - MAX_AUDIT_TOKENS)
+            const maxStartIndex = cleaned.length - MAX_AUDIT_TOKENS;
+            // 生成随机起始位置
+            const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+            // 截取 MAX_AUDIT_TOKENS 个字符
+            extractedContent = cleaned.substring(startIndex, startIndex + MAX_AUDIT_TOKENS);
+          }
+          
+          return `${msg.role}:${extractedContent}`;
         }
         return "";
       })
@@ -634,6 +728,7 @@ function extractMessagesForAudit(body: any, auditParameter: string): string {
     return "";
   }
 }
+
 
 // Perform message audit
 async function auditMessage(message: string): Promise<AuditResponse | null> {
@@ -666,7 +761,7 @@ async function auditMessage(message: string): Promise<AuditResponse | null> {
   }
 }
 
-// Check and update ban status
+// Check and update ban status (using memory store)
 async function checkAndUpdateBanStatus(
   baseurl: string,
   token: string,
@@ -678,26 +773,15 @@ async function checkAndUpdateBanStatus(
     return { isBanned: false, violationCount: 0 };
   }
   
-  const kv = await Deno.openKv();
   const now = Date.now();
-  const banKey = ["ban", baseurl, token];
+  const banKey = `ban:${baseurl}:${token}`;
   
   try {
     // Clean up expired ban records
-    const iter = kv.list({ prefix: ["ban"] });
-    for await (const entry of iter) {
-      const record = entry.value as BanRecord;
-      if (record.bannedUntil && record.bannedUntil < now) {
-        await kv.delete(entry.key);
-      } else if (!record.bannedUntil && 
-                 now - record.firstViolationTime > banTimeInterval * 60 * 1000) {
-        await kv.delete(entry.key);
-      }
-    }
+    memoryStore.cleanup();
     
     // Get current ban record
-    const entry = await kv.get<BanRecord>(banKey);
-    let record = entry.value;
+    let record = memoryStore.getBanRecord(banKey);
     
     if (record) {
       if (record.bannedUntil && record.bannedUntil > now) {
@@ -720,11 +804,11 @@ async function checkAndUpdateBanStatus(
     
     if (record.count >= maxAuditNum) {
       record.bannedUntil = now + (banTimeDuration * 60 * 1000);
-      await kv.set(banKey, record);
+      memoryStore.setBanRecord(banKey, record);
       return { isBanned: true, violationCount: record.count };
     }
     
-    await kv.set(banKey, record);
+    memoryStore.setBanRecord(banKey, record);
     return { isBanned: false, violationCount: record.count };
     
   } catch (e) {
@@ -733,16 +817,15 @@ async function checkAndUpdateBanStatus(
   }
 }
 
-// Check if token is currently banned
+// Check if token is currently banned (using memory store)
 async function isTokenBanned(baseurl: string, token: string): Promise<{ banned: boolean; remainingMinutes?: number }> {
-  const kv = await Deno.openKv();
   const now = Date.now();
-  const banKey = ["ban", baseurl, token];
+  const banKey = `ban:${baseurl}:${token}`;
   
   try {
-    const entry = await kv.get<BanRecord>(banKey);
-    if (entry.value && entry.value.bannedUntil && entry.value.bannedUntil > now) {
-      const remainingMinutes = Math.ceil((entry.value.bannedUntil - now) / 60000);
+    const record = memoryStore.getBanRecord(banKey);
+    if (record && record.bannedUntil && record.bannedUntil > now) {
+      const remainingMinutes = Math.ceil((record.bannedUntil - now) / 60000);
       return { banned: true, remainingMinutes };
     }
     return { banned: false };
@@ -751,34 +834,22 @@ async function isTokenBanned(baseurl: string, token: string): Promise<{ banned: 
   }
 }
 
-// Rate limiting using Deno KV
+// Rate limiting using memory store
 async function checkRateLimit(baseurl: string, limit: number): Promise<boolean> {
   if (limit === 0) return true;
   
-  const kv = await Deno.openKv();
   const now = Date.now();
-  const key = ["ratelimit", baseurl];
+  const key = `ratelimit:${baseurl}`;
   
   try {
-    const expireKey = ["ratelimit_expire", baseurl];
-    const expireEntry = await kv.get<number>(expireKey);
-    if (expireEntry.value && expireEntry.value < now) {
-      await kv.delete(key);
-      await kv.delete(expireKey);
-    }
-    
-    const entry = await kv.get<number>(key);
-    const currentCount = entry.value || 0;
+    const record = memoryStore.getRateLimit(key);
+    const currentCount = record ? record.count : 0;
     
     if (currentCount >= limit) {
       return false;
     }
     
-    await kv.atomic()
-      .set(key, currentCount + 1)
-      .set(["ratelimit_expire", baseurl], now + RATE_LIMIT_WINDOW)
-      .commit();
-    
+    memoryStore.setRateLimit(key, currentCount + 1, now + RATE_LIMIT_WINDOW);
     return true;
   } catch (e) {
     console.error("Rate limit check error:", e);
