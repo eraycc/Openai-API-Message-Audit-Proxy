@@ -43,6 +43,9 @@ const WXPUSHER_API_URL = Deno.env.get("WXPUSHER_API_URL") || "https://wxpusher.z
 const WXPUSHER_APP_TOKEN = Deno.env.get("WXPUSHER_APP_TOKEN") || "AT_xxx";
 const WXPUSHER_UID = Deno.env.get("WXPUSHER_UID") || "UID_xxx";
 
+// 获取 MAX_AUDIT_TOKENS 环境变量，默认为 100
+const MAX_AUDIT_TOKENS = parseInt(Deno.env.get("MAX_AUDIT_TOKENS") || "100");
+
 // Default API sites configuration
 const DEFAULT_API_SITES: ApiSite[] = [
   {
@@ -681,14 +684,38 @@ function extractMessagesForAudit(body: any, auditParameter: string): string {
     if (!Array.isArray(messages)) return "";
     
     const formatted = messages
+      .filter((msg: any) => {
+        // 只提取 role 为 system 和 user 的消息
+        return msg.role === "system" || msg.role === "user";
+      })
       .map((msg: any) => {
         if (typeof msg.content === "string") {
+          // 过滤空/非法字符
           const cleaned = msg.content
             .replace(/[\n\r\t]+/g, " ")
             .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 500);
-          return `${msg.role}:${cleaned}`;
+            .trim();
+          
+          // 如果清理后的内容为空，返回空字符串
+          if (!cleaned) return "";
+          
+          // 根据内容长度决定如何截取
+          let extractedContent: string;
+          
+          if (cleaned.length <= MAX_AUDIT_TOKENS) {
+            // 内容长度不超过 MAX_AUDIT_TOKENS，全部提取
+            extractedContent = cleaned;
+          } else {
+            // 内容长度超过 MAX_AUDIT_TOKENS，随机截取
+            // 计算可能的起始位置范围 (0 到 length - MAX_AUDIT_TOKENS)
+            const maxStartIndex = cleaned.length - MAX_AUDIT_TOKENS;
+            // 生成随机起始位置
+            const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+            // 截取 MAX_AUDIT_TOKENS 个字符
+            extractedContent = cleaned.substring(startIndex, startIndex + MAX_AUDIT_TOKENS);
+          }
+          
+          return `${msg.role}:${extractedContent}`;
         }
         return "";
       })
